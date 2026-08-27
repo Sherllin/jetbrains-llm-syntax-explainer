@@ -1,0 +1,32 @@
+<idea-plugin>
+    <id>com.hesl.syntaxexplainer</id>
+    <name>LLM Syntax Explainer</name>
+    <vendor>hesl</vendor>
+
+    <description><![CDATA[
+        Explains selected code in a transient editor block using an OpenAI-compatible LLM.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.python</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="com.hesl.syntaxexplainer.editor.SyntaxExplainerStartupActivity"/>
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.hesl.syntaxexplainer.settings.LlmSettingsConfigurable"
+                id="com.hesl.syntaxexplainer.settings"
+                displayName="Code Syntax LLM"/>
+    </extensions>
+
+    <actions>
+        <action
+                id="com.hesl.syntaxexplainer.ExplainSelection"
+                class="com.hesl.syntaxexplainer.editor.ExplainSelectionAction"
+                text="用 LLM 解析所选代码"
+                description="在所选代码下方显示语法解析">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="alt shift E"/>
+        </action>
+    </actions>
+</idea-plugin>
