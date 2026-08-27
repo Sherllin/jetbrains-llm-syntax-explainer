@@ -2,10 +2,6 @@
 
 <img src="docs/assets/readme-banner.svg" alt="LLM Syntax Explainer：选中代码，就地获得 LLM 讲解" width="100%">
 
-# LLM Syntax Explainer
-
-在 JetBrains 编辑器里选中代码，就地获得流式语法讲解。
-
 ![JetBrains](https://img.shields.io/badge/JetBrains-2024.2%2B-000000?style=flat-square&logo=jetbrains&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-1.9.24-7F52FF?style=flat-square&logo=kotlin&logoColor=white)
 ![LLM](https://img.shields.io/badge/LLM-OpenAI_Compatible-4D6BFE?style=flat-square)
