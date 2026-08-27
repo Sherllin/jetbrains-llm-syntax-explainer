@@ -8,7 +8,6 @@
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.python</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="com.hesl.syntaxexplainer.editor.SyntaxExplainerStartupActivity"/>

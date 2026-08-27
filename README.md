@@ -1,28 +1,47 @@
+<div align="center">
+
 # LLM Syntax Explainer
 
-一个最小化的原生 PyCharm 插件：选中代码并停留 600ms 后，在选区下一行显示不修改源文件的虚拟解析块，并流式输出 OpenAI 兼容模型的讲解。点击编辑器其他位置、选择新代码或切换文件时，解析块会自动移除。
+在 JetBrains 编辑器里选中代码，就地获得流式语法讲解。
 
-## 使用
+</div>
 
-1. 在 PyCharm 中打开 `Settings → Plugins`。
-2. 点击齿轮，选择 `Install Plugin from Disk...`。
-3. 选择 `build/distributions/pycharm-llm-syntax-explainer-0.1.0.zip`。
-4. 重启 PyCharm。
-5. 打开 `Settings → Tools → Code Syntax LLM`，填写 Base URL、API Key 和模型名。
+## 特点
 
-默认会自动解析选区。也可以右键选择“用 LLM 解析所选代码”，或按 `Alt+Shift+E` 手动触发。
+- **选中即解析**：选区稳定 600ms 后自动开始
+- **就地显示**：结果出现在代码下方的虚拟行，不修改源文件
+- **真实流式输出**：内容随模型响应逐步展示
+- **通用模型接口**：支持 OpenAI、DeepSeek、Ollama 等兼容服务
 
-Base URL 示例：
+适用于 PyCharm、IntelliJ IDEA、WebStorm、GoLand 等 JetBrains IDE。
 
-- OpenAI：`https://api.openai.com/v1`
-- DeepSeek：`https://api.deepseek.com/v1`
-- Ollama OpenAI 兼容接口：`http://localhost:11434/v1`
+## 快速开始
 
-API Key 通过 JetBrains `PasswordSafe` 保存，不写入源码、项目配置或 Git。插件只发送当前选中的代码，不读取或上传文件其他内容。
+1. 打开 `Settings → Plugins`
+2. 点击齿轮，选择 `Install Plugin from Disk...`
+3. 选择 `build/distributions/jetbrains-llm-syntax-explainer-0.1.0.zip`
+4. 重启 IDE
+5. 打开 `Settings → Tools → Code Syntax LLM` 完成模型配置
+
+### DeepSeek 配置
+
+| 配置项 | 填写内容 |
+| --- | --- |
+| Base URL | `https://api.deepseek.com` |
+| API Key | DeepSeek 平台创建的 `sk-...` |
+| Model | `deepseek-v4-flash` |
+
+填写后点击“测试连接”。选中任意代码并停留片刻，解析结果会显示在选区下方。点击其他位置即可清除。
+
+也可以右键选择“用 LLM 解析所选代码”，或按 `Alt+Shift+E` 手动触发。
+
+## 隐私
+
+插件只发送当前选中的代码，不读取文件的其他内容。API Key 通过 JetBrains `PasswordSafe` 保存，不写入项目配置或 Git。
 
 ## 二次开发
 
-要求：JDK 17+、PyCharm 2024.2+。项目自带 Gradle Wrapper，不需要安装 Gradle、Docker或 Python 服务。
+项目使用 Kotlin 和 IntelliJ Platform Gradle Plugin，无需 Docker、Python 服务或预装 Gradle。
 
 ```bash
 ./gradlew test
@@ -30,19 +49,10 @@ API Key 通过 JetBrains `PasswordSafe` 保存，不写入源码、项目配置�
 ./gradlew buildPlugin
 ```
 
-如果本机已经安装 PyCharm，可以复用它进行快速编译：
-
-```bash
-./gradlew test -PlocalIdePath=/Applications/PyCharm.app --no-configuration-cache
-./gradlew buildPlugin -PlocalIdePath=/Applications/PyCharm.app --no-configuration-cache
-```
-
-核心结构保持三块：
-
 ```text
-editor/    选区监听、600ms 防抖、请求取消、Block Inlay 渲染
-llm/       提示词、OpenAI 请求、SSE 流式解析
-settings/  配置页、校验和 PasswordSafe 密钥存储
+editor/    选区监听、请求取消、Block Inlay 渲染
+llm/       提示词、OpenAI 请求、SSE 流解析
+settings/  配置页、参数校验、API Key 存储
 ```
 
-安装包输出到 `build/distributions/`。修改版本号后重新执行 `buildPlugin` 即可生成新的 ZIP。
+安装包生成在 `build/distributions/`。

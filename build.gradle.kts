@@ -21,7 +21,7 @@ dependencies {
     intellijPlatform {
         val localIdePath = providers.gradleProperty("localIdePath").orNull
         if (localIdePath == null) {
-            pycharmCommunity("2024.2.6")
+            intellijIdeaCommunity("2024.2.6")
         } else {
             local(localIdePath)
         }
