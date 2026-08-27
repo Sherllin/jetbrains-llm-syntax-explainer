@@ -39,20 +39,18 @@
 
 插件只发送当前选中的代码，不读取文件的其他内容。API Key 通过 JetBrains `PasswordSafe` 保存，不写入项目配置或 Git。
 
-## 二次开发
-
-项目使用 Kotlin 和 IntelliJ Platform Gradle Plugin，无需 Docker、Python 服务或预装 Gradle。
-
-```bash
-./gradlew test
-./gradlew runIde
-./gradlew buildPlugin
-```
+## 项目结构
 
 ```text
-editor/    选区监听、请求取消、Block Inlay 渲染
-llm/       提示词、OpenAI 请求、SSE 流解析
-settings/  配置页、参数校验、API Key 存储
+src/
+├── main/
+│   ├── kotlin/com/hesl/syntaxexplainer/
+│   │   ├── editor/      选区监听、请求调度与 Block Inlay 渲染
+│   │   ├── llm/         提示词、OpenAI 请求与 SSE 流解析
+│   │   └── settings/    配置页、参数校验与 API Key 存储
+│   └── resources/META-INF/
+│       └── plugin.xml   插件入口、设置页和编辑器操作声明
+└── test/kotlin/         核心请求、提示词和配置校验测试
 ```
 
-安装包生成在 `build/distributions/`。
+项目保持单模块结构，不依赖 Docker、Python 服务或独立后端。
