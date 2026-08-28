@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.hesl.syntaxexplainer"
-version = "0.1.0"
+version = "0.1.1"
 
 repositories {
     mavenCentral()

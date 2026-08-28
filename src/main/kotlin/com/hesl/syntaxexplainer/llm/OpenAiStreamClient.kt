@@ -23,6 +23,20 @@ class OpenAiStreamClient(
         onDelta: (String) -> Unit,
         onComplete: () -> Unit,
         onError: (String) -> Unit,
+    ): StreamHandle = stream(
+        settings = settings,
+        messages = listOf(ChatMessage(ChatRole.USER, prompt)),
+        onDelta = onDelta,
+        onComplete = onComplete,
+        onError = onError,
+    )
+
+    fun stream(
+        settings: ValidatedSettings,
+        messages: List<ChatMessage>,
+        onDelta: (String) -> Unit,
+        onComplete: () -> Unit,
+        onError: (String) -> Unit,
     ): StreamHandle {
         val input = AtomicReference<InputStream?>()
         val future = AppExecutorUtil.getAppExecutorService().submit {
@@ -32,7 +46,7 @@ class OpenAiStreamClient(
                     .timeout(Duration.ofSeconds(90))
                     .header("Authorization", "Bearer ${settings.apiKey}")
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(OpenAiRequest.body(settings.model, prompt)))
+                    .POST(HttpRequest.BodyPublishers.ofString(OpenAiRequest.body(settings.model, messages)))
                     .build()
                 val response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream())
                 input.set(response.body())

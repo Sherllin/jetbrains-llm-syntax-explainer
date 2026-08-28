@@ -1,5 +1,6 @@
 package com.hesl.syntaxexplainer.editor
 
+import com.hesl.syntaxexplainer.llm.Conversation
 import com.hesl.syntaxexplainer.llm.OpenAiStreamClient
 import com.hesl.syntaxexplainer.llm.PromptBuilder
 import com.hesl.syntaxexplainer.llm.StreamHandle
@@ -87,27 +88,61 @@ class SelectionExplanationService(private val project: Project) : Disposable {
         when (val validation = SettingsValidator.validate(state.baseUrl.orEmpty(), state.model.orEmpty(), ApiKeyStore.load())) {
             is InvalidSettings -> update(editor, session, validation.message)
             is ValidatedSettings -> {
-                update(editor, session, "正在解析…")
                 val prompt = PromptBuilder.build(
                     language = editor.virtualFile?.fileType?.name ?: "Code",
                     selectedCode = selection,
                     instruction = state.prompt.orEmpty(),
                 )
-                val output = StringBuilder()
-                session.stream = client.stream(
-                    settings = validation,
-                    prompt = prompt,
-                    onDelta = { delta ->
-                        output.append(delta)
-                        update(editor, session, output.toString())
-                    },
-                    onComplete = {
-                        if (output.isEmpty()) update(editor, session, "模型未返回可显示内容。")
-                    },
-                    onError = { message -> update(editor, session, message) },
-                )
+                session.conversation = Conversation(prompt)
+                stream(editor, session, validation)
             }
         }
+    }
+
+    private fun followUp(editor: Editor, session: Session, question: String) {
+        if (session.cancelled || session.streaming || sessions[editor] !== session) return
+        val conversation = session.conversation ?: return
+        val state = LlmSettings.getInstance().state
+        when (val validation = SettingsValidator.validate(state.baseUrl.orEmpty(), state.model.orEmpty(), ApiKeyStore.load())) {
+            is InvalidSettings -> update(editor, session, conversation.transcript() + "\n\n" + validation.message, true)
+            is ValidatedSettings -> {
+                if (!conversation.beginFollowUp(question)) return
+                stream(editor, session, validation)
+            }
+        }
+    }
+
+    private fun stream(editor: Editor, session: Session, settings: ValidatedSettings) {
+        val conversation = session.conversation ?: return
+        session.streaming = true
+        update(editor, session, conversation.transcript().ifEmpty { "正在解析…" }, false)
+        session.stream = client.stream(
+            settings = settings,
+            messages = conversation.messages(),
+            onDelta = { delta ->
+                if (!session.cancelled) {
+                    conversation.appendAssistantDelta(delta)
+                    update(editor, session, conversation.transcript(), false)
+                }
+            },
+            onComplete = {
+                if (!session.cancelled) {
+                    session.streaming = false
+                    session.stream = null
+                    conversation.completeAssistant()
+                    val text = conversation.transcript().ifEmpty { "模型未返回可显示内容。" }
+                    update(editor, session, text, true)
+                }
+            },
+            onError = { message ->
+                if (!session.cancelled) {
+                    session.streaming = false
+                    session.stream = null
+                    conversation.failAssistant(message)
+                    update(editor, session, conversation.transcript(), true)
+                }
+            },
+        )
     }
 
     private fun show(editor: Editor, text: String) {
@@ -116,13 +151,15 @@ class SelectionExplanationService(private val project: Project) : Disposable {
         update(editor, session, text)
     }
 
-    private fun update(editor: Editor, session: Session, text: String) {
+    private fun update(editor: Editor, session: Session, text: String, inputEnabled: Boolean = false) {
         ApplicationManager.getApplication().invokeLater {
             if (project.isDisposed || editor.isDisposed || sessions[editor] !== session || session.cancelled) return@invokeLater
-            val inlay = session.inlay ?: ExplanationInlay(editor, editor.selectionModel.selectionEnd).also {
+            val inlay = session.inlay ?: ExplanationInlay(editor, editor.selectionModel.selectionEnd) { question ->
+                followUp(editor, session, question)
+            }.also {
                 session.inlay = it
             }
-            inlay.update(text)
+            inlay.update(text, inputEnabled)
         }
     }
 
@@ -142,6 +179,8 @@ class SelectionExplanationService(private val project: Project) : Disposable {
         @Volatile var cancelled = false
         @Volatile var pending: ScheduledFuture<*>? = null
         @Volatile var stream: StreamHandle? = null
+        @Volatile var streaming = false
+        @Volatile var conversation: Conversation? = null
         var inlay: ExplanationInlay? = null
 
         fun cancel() {
