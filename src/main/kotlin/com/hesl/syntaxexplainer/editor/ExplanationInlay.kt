@@ -37,7 +37,7 @@ class ExplanationInlay(
     }
 
     fun dispose() {
-        inlay?.dispose()
+        disposeInlay(inlay)
     }
 
     private class View(
