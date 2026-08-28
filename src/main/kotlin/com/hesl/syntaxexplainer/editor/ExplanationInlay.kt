@@ -13,7 +13,6 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JPanel
-import javax.swing.JTextArea
 
 class ExplanationInlay(
     private val editor: Editor,
@@ -44,7 +43,7 @@ class ExplanationInlay(
         private val editor: Editor,
         onSubmit: (String) -> Unit,
     ) : JPanel(BorderLayout(0, JBUI.scale(8))) {
-        private val output = JTextArea("正在解析…").apply {
+        private val output = NonScrollingTextArea("正在解析…").apply {
             isEditable = false
             isFocusable = false
             lineWrap = true
