@@ -18,8 +18,9 @@ class ExplanationInlay(
     private val editor: Editor,
     offset: Int,
     onSubmit: (String) -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    private val view = View(editor, onSubmit)
+    private val view = View(editor, onSubmit, onDismiss)
     private val inlay = editor.addComponentInlay(
         offset = offset,
         properties = InlayProperties()
@@ -42,6 +43,7 @@ class ExplanationInlay(
     private class View(
         private val editor: Editor,
         onSubmit: (String) -> Unit,
+        onDismiss: () -> Unit,
     ) : JPanel(BorderLayout(0, JBUI.scale(8))) {
         private val output = NonScrollingTextArea("正在解析…").apply {
             isEditable = false
@@ -54,11 +56,14 @@ class ExplanationInlay(
             foreground = JBColor(0x30343B, 0xDFE1E5)
         }
         private val input = FollowUpInput(onSubmit)
+        private val dismissOnClick = DismissOnClickListener(onDismiss)
 
         init {
             isOpaque = false
             border = JBUI.Borders.empty(12)
             minimumSize = Dimension(JBUI.scale(260), 0)
+            addMouseListener(dismissOnClick)
+            output.addMouseListener(dismissOnClick)
             add(output, BorderLayout.CENTER)
             add(input, BorderLayout.SOUTH)
         }

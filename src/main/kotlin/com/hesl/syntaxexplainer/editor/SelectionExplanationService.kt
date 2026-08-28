@@ -154,9 +154,12 @@ class SelectionExplanationService(private val project: Project) : Disposable {
     private fun update(editor: Editor, session: Session, text: String, inputEnabled: Boolean = false) {
         ApplicationManager.getApplication().invokeLater {
             if (project.isDisposed || editor.isDisposed || sessions[editor] !== session || session.cancelled) return@invokeLater
-            val inlay = session.inlay ?: ExplanationInlay(editor, editor.selectionModel.selectionEnd) { question ->
-                followUp(editor, session, question)
-            }.also {
+            val inlay = session.inlay ?: ExplanationInlay(
+                editor = editor,
+                offset = editor.selectionModel.selectionEnd,
+                onSubmit = { question -> followUp(editor, session, question) },
+                onDismiss = { clear(editor) },
+            ).also {
                 session.inlay = it
             }
             inlay.update(text, inputEnabled)
